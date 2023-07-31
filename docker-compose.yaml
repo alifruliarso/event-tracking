@@ -1,0 +1,35 @@
+version: '3.3'
+services:
+  event-tracking-api:
+    container_name: event-tracking-api
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - GRIDDB_NOTIFICATION_MEMBER=griddb:10001
+      - GRIDDB_CLUSTER_NAME=eventApiCluster
+      - GRIDDB_USER=admin
+      - GRIDDB_PASSWORD=admin
+    volumes:
+      - ./:/app
+      - ./.m2:/root/.m2
+    ports:
+      - 8080:8080
+      - 35729:35729
+      - 5005:5005
+    depends_on:
+      - griddb
+  griddb:
+    container_name: griddb
+    build:
+      context: ./dockergriddb
+      dockerfile: Dockerfile
+    environment:
+      - GRIDDB_CLUSTER_NAME=eventApiCluster
+    ports:
+      - 10001:10001
+    volumes:
+      - "volgriddb-eventtracker:/var/lib/gridstore"
+
+volumes:
+  volgriddb-eventtracker:

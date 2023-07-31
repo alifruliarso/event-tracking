@@ -1,0 +1,13 @@
+POST http://localhost:8080/api/track HTTP/1.1
+Content-Type: application/json
+
+{
+    "appId":"APP_1",
+    "eventType":"ADD_CART",
+    "externalId":"2385254254",
+    "timestamp":"2023-07-12T10:55:50.764Z"
+}
+###
+curl --request POST --url http://localhost:8080/api/track \
+ --header 'content-type: application/json'  --header 'user-agent: vscode-restclient' \
+   --data '{"appId":"APP_1","eventType":"ADD_CART","externalId":"2385254254","timestamp":"2023-07-12T10:55:50.764Z"}'
