@@ -1,6 +1,8 @@
 Realtime Event Tracking using Spring Boot and GridDB
 ===
 
+![system-design-event-tracking.jpg](system-design-event-tracking.jpg)
+
 ## Definition of Event Tracking Service
 
 In today's digital landscape, tracking and analyzing user events is crucial for gaining insights into user behavior, optimizing performance, and delivering a personalized user experience.
