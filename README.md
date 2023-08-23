@@ -10,19 +10,25 @@ Spring Boot, Thymeleaf, Maven\
 Database: GridDB 5.1.0
 
 
-## Run Application
+## Run Application with Docker Compose
 Build the docker image: 
 ```shell
 docker compose build
 ```
 
-Run the app with Docker Compose:
+Run the docker image: 
 
 ```shell
 docker compose up
 ```
 
-#### There is fake event producer to simulate the event creation. See [FakeEventProducer.java](src/main/java/com/galapea/techblog/springboot/timeseries/client/FakeEventProducer.java)
+## Run Application with Maven
+
+```shell
+./mvnw spring-boot:run
+```
+
+### For simulating the event creation, I have created a scheduled task that will fire every minute. See [FakeEventProducer.java](src/main/java/com/galapea/techblog/springboot/timeseries/client/FakeEventProducer.java).
 
 ### To see all event, open http://localhost:8080/events
 ### To see chart, open http://localhost:8080/aggregate

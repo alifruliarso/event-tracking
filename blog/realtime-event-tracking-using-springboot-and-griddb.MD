@@ -234,29 +234,29 @@ To provide the dataset into the chartjs, we need to use aggregate operation on t
 
 ```java
 public List<EventAggregateView> getEvents() {
-        List<EventAggregateView> views = new ArrayList<>();
+    List<EventAggregateView> views = new ArrayList<>();
 
-        LocalDateTime startDate = LocalDateTime.parse("2023-07-01T00:00:00"),
-                endDate = LocalDateTime.now();
-        for (LocalDateTime date = startDate; date.isBefore(endDate); date = date.plusDays(1)) {
-            try {
-                java.util.Date start =
-                        convertToDateViaInstant(date.withHour(0).withMinute(0).withSecond(0));
-                java.util.Date end =
-                        convertToDateViaInstant(date.withHour(23).withMinute(59).withSecond(59));
-                AggregationResult aggregationResult =
-                        eventsContainer.aggregate(start, end, "appId", Aggregation.COUNT);
-                Long count = aggregationResult.getLong();
-                if (count.compareTo(0L) > 0) {
-                    views.add(new EventAggregateView(convertToDateViaInstant(date), count,
-                            date.format(dateTimeFormatter)));
-                }
-            } catch (GSException e) {
-                e.printStackTrace();
+    LocalDateTime startDate = LocalDateTime.parse("2023-07-01T00:00:00"),
+            endDate = LocalDateTime.now();
+    for (LocalDateTime date = startDate; date.isBefore(endDate); date = date.plusDays(1)) {
+        try {
+            java.util.Date start =
+                    convertToDateViaInstant(date.withHour(0).withMinute(0).withSecond(0));
+            java.util.Date end =
+                    convertToDateViaInstant(date.withHour(23).withMinute(59).withSecond(59));
+            AggregationResult aggregationResult =
+                    eventsContainer.aggregate(start, end, "appId", Aggregation.COUNT);
+            Long count = aggregationResult.getLong();
+            if (count.compareTo(0L) > 0) {
+                views.add(new EventAggregateView(convertToDateViaInstant(date), count,
+                        date.format(dateTimeFormatter)));
             }
+        } catch (GSException e) {
+            e.printStackTrace();
         }
-        return views;
     }
+    return views;
+}
 ```
 
 We use the aggregate function from the TimeSeries container.
@@ -272,6 +272,65 @@ AggregationResult aggregate(java.util.Date start,
 > Performs an aggregation operation on a Row set or its specific Columns, based on the specified start and end times.
 The parameter column might be ignored depending on the parameter aggregation. The boundary Rows whose timestamps are identical with the start or end time are included in the range of operation. If the specified start time is later than the end time, all Rows are excluded from the range.
 
+### For simulating the event creation, we create a scheduled task that will fire every minute.
+```java
+@Scheduled(fixedDelay = 1, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
+public void scheduleEventCreation() throws IOException, InterruptedException {
+    log.info("scheduleEventCreation()");
+
+    HttpClient client = HttpClient.newHttpClient();
+    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
+    for (int i = 0; i <= 10; i++) {
+        Runnable runnableTask = () -> {
+            try {
+                postEvent(client);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        };
+        executorService.schedule(runnableTask, i, TimeUnit.SECONDS);
+    }
+}
+
+private void postEvent(HttpClient client)
+        throws JsonProcessingException, IOException, InterruptedException {
+    Instant instant = Instant.now();
+    var values = new HashMap<String, String>() {
+        {
+            put("appId", "APP_1");
+            put("eventType", getRandomElement(EventTrackerConstants.EVENT_TYPE_LIST));
+            put("externalId", faker.idNumber().valid());
+            put("timestamp", instant.toString());
+        }
+    };
+
+    var objectMapper = new ObjectMapper();
+    String requestBody = objectMapper.writeValueAsString(values);
+
+    HttpRequest request =
+            HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/api/track"))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .header("Content-type", "application/json").build();
+
+    client.send(request, HttpResponse.BodyHandlers.ofString());
+}
+```
+
+### Running the Project with Docker Compose
+To spin up the project we will utilize docker and docker-compose. We only need to install docker. Then run the following commands:
+1. Build the docker image:
+```shell
+docker compose build
+```
+
+2. Run the docker image:
+```shell
+docker compose up
+```
+
+#### To see all events, open http://localhost:8080/events
+#### To see the chart, open http://localhost:8080/aggregate
 
 ## Best Practices
 To make the most out of real-time event tracking in Spring Boot, it's important to follow some best practices. Here are some recommendations to help you leverage the full potential of real-time event tracking:
